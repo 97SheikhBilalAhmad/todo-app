@@ -1,99 +1,106 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CreateTodoDto } from './dto/create-todo.dto';
-import { UpdateTodoDto } from './dto/update-todo.dto';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { db } from "../db/drizzle";
+import { todos } from "../db/schema";
+import { eq, and } from "drizzle-orm";
+import { CreateTodoDto } from "./dto/create-todo.dto";
+import { UpdateTodoDto } from "./dto/update-todo.dto";
 
 @Injectable()
 export class TodosService {
-  
-  constructor(private readonly prisma: PrismaService) {}
+  // ✅ CREATE TODO
+  async create(dto: CreateTodoDto, userId: string) {
+    const [todo] = await db
+      .insert(todos)
+      .values({
+        title: dto.title,
+        description: dto.description,
+        userId,
+      })
+      .returning();
 
-  // ✅ CREATE TODO (DB me save hoga)
-  async create(createTodoDto: CreateTodoDto, userId: string) {
-    const todo = await this.prisma.todo.create({
-      data: {
-        title: createTodoDto.title,
-        description: createTodoDto.description,
-        userId: userId, 
-      },
-    });
-
-    return { 
-      message: 'Todo created successfully',
+    return {
+      message: "Todo created successfully",
       data: todo,
     };
   }
 
-  // ✅ GET ALL TODOS (sirf logged-in user ke)
+  // ✅ GET ALL TODOS (logged-in user only)
   async findAll(userId: string) {
-    const todos = await this.prisma.todo.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const data = await db
+      .select()
+      .from(todos)
+      .where(eq(todos.userId, userId))
+      .orderBy(todos.createdAt);
 
     return {
-      message: 'All todos of logged-in user',
-      data: todos,
-    };
-  } 
-
-  // ✅ GET SINGLE TODO (ownership check)
-  async findOne(id: string, userId: string) {
-    const todo = await this.prisma.todo.findFirst({
-      where: { id: Number(id), userId },
-    });
-
-    if (!todo) {
-      throw new NotFoundException('Todo not found');
-    }
-
-    return {
-      message: 'Todo fetched successfully',
-      data: todo,
+      message: "All todos of logged-in user",
+      data,
     };
   }
 
-  // ✅ UPDATE TODO (only owner can update)
-  async updateTodo(
-    id: number,
-    dto: UpdateTodoDto,
-    userId: string
-  ) {
-    const todo = await this.prisma.todo.findUnique({
-      where: { id },
-    });
+  // ✅ GET SINGLE TODO
+  async findOne(id: string, userId: string) {
+    const [todo] = await db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.id, id), eq(todos.userId, userId)));
 
     if (!todo) {
       throw new NotFoundException("Todo not found");
+    }
+
+    return {
+      message: "Todo fetched successfully",
+      data: todo,
+    };
+  }
+
+  // ✅ UPDATE TODO (OWNER CHECK)
+  async updateTodo(id: string, dto: UpdateTodoDto, userId: string) {
+    const [todo] = await db
+      .select()
+      .from(todos)
+      .where(eq(todos.id, id));
+
+    if (!todo) {
+      throw new NotFoundException("Todo not found"); 
     }
 
     if (todo.userId !== userId) {
       throw new ForbiddenException("Access denied");
     }
 
-    return this.prisma.todo.update({
-      where: { id },
-      data: dto,
-      
-    });
-  }
-
-  // ✅ DELETE TODO (only owner can delete)
-  async remove(id: string, userId: string) {
-    const todo = await this.prisma.todo.findFirst({
-      where: { id: Number(id), userId },
-    });
-
-    if (!todo) {
-      throw new ForbiddenException('You cannot delete this todo');
-    }
-
-    await this.prisma.todo.delete({
-      where: { id: Number(id) },
-    });
+    const [updatedTodo] = await db
+      .update(todos)
+      .set(dto)
+      .where(eq(todos.id, id))
+      .returning();
 
     return {
-      message: 'Todo deleted successfully',
+      message: "Todo updated successfully",
+      data: updatedTodo,
+    };
+  }
+
+  // ✅ DELETE TODO (OWNER CHECK)
+  async remove(id: string, userId: string) {
+    const [todo] = await db
+      .select()
+      .from(todos)
+      .where(eq(todos.id, id));
+
+    if (!todo || todo.userId !== userId) {
+      throw new ForbiddenException("You cannot delete this todo");
+    }
+
+    await db.delete(todos).where(eq(todos.id, id));
+
+    return {
+      message: "Todo deleted successfully",
     };
   }
 }

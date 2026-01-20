@@ -45,7 +45,7 @@ export class TodosController {
     @Body() dto: UpdateTodoDto,
     @Req() req
   ) {
-    return this.todosService.updateTodo(+id, dto, req.user.id);
+    return this.todosService.updateTodo(id, dto, req.user.id);
   }
 
   // ✅ DELETE TODO
