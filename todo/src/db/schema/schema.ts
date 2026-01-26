@@ -13,7 +13,7 @@ export const todos = pgTable("todos", {
   description: text("description"),
   userId: uuid("user_id")
     .notNull()
-    .references(() => users.id), 
+    .references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
  

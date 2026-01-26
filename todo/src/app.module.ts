@@ -7,10 +7,10 @@ import { JwtModule } from '@nestjs/jwt/dist/jwt.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [ ConfigModule.forRoot({ isGlobal: true }),
+  imports: [ ConfigModule.forRoot({ isGlobal: true , envFilePath: '.env', }),
     TodosModule,AuthModule,JwtModule.register({
       // Use environment variable for secret in a real application
-      secret: 'super_secret_key', //
+      secret: 'super_secret_key_is_here_please_change_it', //
       signOptions: { expiresIn: '1d' },
        
       

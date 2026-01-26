@@ -3,23 +3,25 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
-import { db } from "../db/drizzle";
+import { DatabaseService } from "src/modules/database/database.service";
 import { todos } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { CreateTodoDto } from "./dto/create-todo.dto";
 import { UpdateTodoDto } from "./dto/update-todo.dto";
 
 @Injectable()
-export class TodosService {
+export class TodosService { 
+   constructor(private db: DatabaseService) {}
   // ✅ CREATE TODO
   async create(dto: CreateTodoDto, userId: string) {
-    const [todo] = await db
+    console.log('USER ID IN SERVICE =>', userId); 
+    const [todo] = await this.db.db
       .insert(todos)
       .values({
         title: dto.title,
         description: dto.description,
-        userId,
-      })
+        userId : userId,
+      }) 
       .returning();
 
     return {
@@ -30,7 +32,7 @@ export class TodosService {
 
   // ✅ GET ALL TODOS (logged-in user only)
   async findAll(userId: string) {
-    const data = await db
+    const data = await this.db.db
       .select()
       .from(todos)
       .where(eq(todos.userId, userId))
@@ -44,7 +46,7 @@ export class TodosService {
 
   // ✅ GET SINGLE TODO
   async findOne(id: string, userId: string) {
-    const [todo] = await db
+    const [todo] = await this.db.db
       .select()
       .from(todos)
       .where(and(eq(todos.id, id), eq(todos.userId, userId)));
@@ -61,7 +63,7 @@ export class TodosService {
 
   // ✅ UPDATE TODO (OWNER CHECK)
   async updateTodo(id: string, dto: UpdateTodoDto, userId: string) {
-    const [todo] = await db
+    const [todo] = await this.db.db
       .select()
       .from(todos)
       .where(eq(todos.id, id));
@@ -74,7 +76,7 @@ export class TodosService {
       throw new ForbiddenException("Access denied");
     }
 
-    const [updatedTodo] = await db
+    const [updatedTodo] = await this.db.db
       .update(todos)
       .set(dto)
       .where(eq(todos.id, id))
@@ -88,7 +90,7 @@ export class TodosService {
 
   // ✅ DELETE TODO (OWNER CHECK)
   async remove(id: string, userId: string) {
-    const [todo] = await db
+    const [todo] = await this.db.db
       .select()
       .from(todos)
       .where(eq(todos.id, id));
@@ -97,7 +99,7 @@ export class TodosService {
       throw new ForbiddenException("You cannot delete this todo");
     }
 
-    await db.delete(todos).where(eq(todos.id, id));
+    await this.db.db.delete(todos).where(eq(todos.id, id));
 
     return {
       message: "Todo deleted successfully",

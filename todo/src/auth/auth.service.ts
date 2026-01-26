@@ -5,17 +5,17 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
-import { db } from '../db/drizzle';
+import { DatabaseService } from '../modules/database/database.service'; 
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService, private readonly databaseService: DatabaseService) {}
 
   // ✅ SIGNUP
   async signup(name: string, email: string, password: string) {
-    const [existingUser] = await db
+    const [existingUser] = await this.databaseService.db
       .select()
       .from(users)
       .where(eq(users.email, email));
@@ -26,7 +26,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [user] = await db
+    const [user] = await this.databaseService.db
       .insert(users)
       .values({
         name,
@@ -47,7 +47,7 @@ export class AuthService {
 
   // ✅ LOGIN
   async login(email: string, password: string) {
-    const [user] = await db
+    const [user] = await this.databaseService.db
       .select({
         id: users.id,
         email: users.email,
@@ -67,12 +67,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = await this.jwtService.signAsync({
-      userId: user.id,
-      email: user.email,
-    });
+    const payload = {
+  userId: user.id,     // 👈 VERY IMPORTANT
+  email: user.email,
+};
+
+    const token = await this.jwtService.sign(payload);
 
     return {
+      
       message: 'Login successful',
       access_token: token,
       user: {

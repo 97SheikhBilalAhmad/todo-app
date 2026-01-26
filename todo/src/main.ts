@@ -12,7 +12,7 @@ async function bootstrap() {
     origin: 'http://localhost:3000',
     credentials: true,
   });
-   console.log('DB URL:', process.env.DATABASE_URL);
+   console.log('JWT_SECRET =>', process.env.JWT_SECRET);
   await app.listen(process.env.PORT ?? 5300)
   {
        console.log('server started on port http://localhost:5300');
