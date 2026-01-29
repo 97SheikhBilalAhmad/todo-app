@@ -1,16 +1,29 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateTodoDto } from './create-todo.dto';
-import { IsOptional, IsString } from "class-validator";
-
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsBoolean, IsOptional } from 'class-validator';
 
 export class UpdateTodoDto {
-  @IsOptional()
+
+  @ApiPropertyOptional({
+    example: 'Learn Swagger deeply',
+    description: 'Updated title of the todo',
+  })
   @IsString()
+  @IsOptional()
   title?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'Swagger + NestJS complete documentation',
+    description: 'Updated description of the todo',
+  })
   @IsString()
+  @IsOptional()
   description?: string;
-}
 
-// export class UpdateTodoDto extends PartialType(CreateTodoDto) {}
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Updated completion status',
+  })
+  @IsBoolean()
+  @IsOptional()
+  completed?: boolean;
+}
