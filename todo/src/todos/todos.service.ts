@@ -95,7 +95,7 @@ export class TodosService {
       .from(todos)
       .where(eq(todos.id, id));
 
-    if (!todo || todo.userId !== userId) {
+    if (!todo) {
       throw new ForbiddenException("You cannot delete this todo");
     }
 

@@ -29,8 +29,8 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex h-screen items-center justify-center bg-black-50">
-      <div className="w-96 rounded-xl bg-white p-6 shadow">
+    <div className="flex h-screen bg-gradient-to-br from-indigo-900 via-purple-300 to-pink-600 items-center justify-center  bg-black-50">
+      <div className="w-full max-w-2xl  rounded-2xl bg-gradient-to-br from-indigo-400 via-purple-100 to-pink-300 p-6 shadow-2xl">
         <h1 className="mb-4 text-2xl font-bold text-center text-black">Login</h1>
 
         <input
@@ -49,12 +49,9 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button
-          onClick={handleLogin}
-          className="w-full rounded text-2xl bg-blue-600 p-2 text-black hover:bg-blue-700"
-        >
-          Login
-        </button>
+        <button onClick={handleLogin} className="w-full rounded-xl bg-gradient-to-br from-indigo-600 to-pink-600 py-3 text-lg font-semibold text-white hover:bg-gray-700">
+  Login
+</button>
 
         <p className="mt-4 text-center text-sm  text-black">
           Don’t have an account?{" "}

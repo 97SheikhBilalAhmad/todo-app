@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,12 +8,9 @@ import { useRouter } from "next/navigation";
 interface Todo {
   id: number;
   title: string;
-  description?: string;
-  createdAt: string;
 }
 
 interface TodosResponse {
-  message: string;
   data: Todo[];
 }
 
@@ -25,12 +23,9 @@ export default function TodosPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
-
-  // 🔐 Auth check + fetch todos
+  // 🔐 Auth + fetch
   useEffect(() => {
     const token = localStorage.getItem("token");
-    //console.log("Token:", token);
-
     if (!token) {
       router.replace("/login");
       return;
@@ -43,40 +38,33 @@ export default function TodosPage() {
   const fetchTodos = async () => {
     try {
       const res = await api.get<TodosResponse>("/todos");
-      setTodos(res.data.data); // ✅ IMPORTANT FIX
+      setTodos(res.data.data);
     } catch (err) {
-      console.log("Fetch todos failed");
+      console.log("Fetch failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // ➕ Add Todo
+  // ➕ Add
   const addTodo = async () => {
     if (!title.trim()) return;
-
     await api.post("/todos", { title });
     setTitle("");
     fetchTodos();
   };
 
+  // ✏️ Update
+  const updateTodo = async (id: number) => {
+    if (!editTitle.trim()) return;
 
-const updateTodo = async (id: number) => {
-  if (!editTitle.trim()) return;
+    await api.put(`/todos/${id}`, { title: editTitle });
+    setEditingId(null);
+    setEditTitle("");
+    fetchTodos();
+  };
 
-  await api.put(`/todos/${id}`, {
-    title: editTitle,
-  });
-
-  setEditingId(null);
-  setEditTitle("");
-  fetchTodos();
-};
-
-
-
-
-  // ❌ Delete Todo
+  // ❌ Delete
   const deleteTodo = async (id: number) => {
     await api.delete(`/todos/${id}`);
     fetchTodos();
@@ -89,87 +77,97 @@ const updateTodo = async (id: number) => {
   };
 
   if (loading) {
-    return <p className="p-6">Loading todos...</p>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-lg text-gray-600">
+        Loading your todos...
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-xl rounded bg-white p-6 shadow">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">My Todos</h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-100 to-pink-300 flex items-center p-6">
+      <div className="mx-auto w-full max-w-xl rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-300 to-pink-600 p-6 shadow-2xl">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-extrabold text-gray-800">
+            📝 My Todo App
+          </h1>
           <button
             onClick={logout}
-            className="rounded bg-red-500 px-3 py-1 text-white"
+            className="rounded-lg bg-red-500 px-4 py-1 text-sm font-medium text-white hover:bg-red-600"
           >
             Logout
           </button>
         </div>
 
         {/* Add Todo */}
-        <div className="mb-4 flex gap-2">
+        <div className="mb-6 flex gap-2">
           <input
-            className="flex-1 rounded border p-2 text-black"
-            placeholder="New todo..."
+            className="flex-1 rounded-xl border border-gray-600 px-4 py-2 text-black focus:border-black focus:outline-none"
+            placeholder="What do you want to do today?"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <button
             onClick={addTodo}
-            className="rounded bg-blue-600 px-4 text-white"
+            className="rounded-xl bg-gradient-to-br from-indigo-600 to-pink-600 px-5 py-2 font-semibold text-white hover:bg-gray-700"
           >
             Add
           </button>
         </div>
 
-        {/* Todos List */}
+        {/* Todo List */}
         {todos.length === 0 ? (
-          <p className="text-gray-500">No todos yet</p>
+          <p className="text-center text-gray-500">
+            No todos yet. Add one 🚀
+          </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {todos.map((todo) => (
               <li
-  key={todo.id}
-  className="flex items-center justify-between rounded border p-2"
->
-  {editingId === todo.id ? (
-    <input
-      value={editTitle}
-      onChange={(e) => setEditTitle(e.target.value)}
-      className="flex-1 rounded border p-1 mr-2 text-black"
-    />
-  ) : (
-    <span className="text-black">{todo.title}</span>
-  )}
+                key={todo.id}
+                className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 shadow-sm hover:bg-white"
+              >
+                {editingId === todo.id ? (
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="mr-3 flex-1 rounded-lg border px-3 py-1 text-black focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                ) : (
+                  <span className="text-lg font-medium text-gray-800">
+                    {todo.title}
+                  </span>
+                )}
 
-  <div className="flex gap-2">
-    {editingId === todo.id ? (
-      <button
-        onClick={() => updateTodo(todo.id)}
-        className="text-green-600"
-      >
-        Save
-      </button>
-    ) : (
-      <button
-        onClick={() => {
-          setEditingId(todo.id);
-          setEditTitle(todo.title);
-        }}
-        className="text-blue-600"
-      >
-        Edit
-      </button>
-    )}
+                <div className="flex gap-3">
+                  {editingId === todo.id ? (
+                    <button
+                      onClick={() => updateTodo(todo.id)}
+                      className="text-green-600 hover:underline"
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingId(todo.id);
+                        setEditTitle(todo.title);
+                      }}
+                      className="text-indigo-600 hover:underline"
+                    >
+                      Edit
+                    </button>
+                  )}
 
-    <button
-      onClick={() => deleteTodo(todo.id)}
-      className="text-red-500"
-    >
-      Delete
-    </button>
-  </div>
-</li>
-
+                  <button
+                    onClick={() => deleteTodo(todo.id)}
+                    className="text-red-500 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
             ))}
           </ul>
         )}

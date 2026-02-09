@@ -1,18 +1,24 @@
-'use client';
+"use client";
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactNode, useState } from "react";
+import { Toaster } from "react-hot-toast";
 
-const queryClient = new QueryClient();
+export default function Providers({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
 
-interface ProvidersProps {
-  children: ReactNode;
-}
-
-export default function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#111",
+            color: "#fff",
+          },
+        }}
+      />
     </QueryClientProvider>
   );
 }
