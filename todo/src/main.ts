@@ -7,6 +7,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   dotenv.config();
   const app = await NestFactory.create(AppModule);
+
   
 const config = new DocumentBuilder()
   .setTitle('Todo App API')
@@ -26,7 +27,10 @@ const document = SwaggerModule.createDocument(app, config);
 SwaggerModule.setup('api-docs', app, document);
    
    app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ],
     credentials: true,
   });
    console.log('JWT_SECRET =>', process.env.JWT_SECRET);
